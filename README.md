@@ -35,7 +35,7 @@ To get set up, run:
 
 ```bash
 pipenv install && pipenv shell
-npm install --prefix client
+npm install --prefix client-with-jwt
 cd server
 flask db init
 flask db migrate -m "initial migration"
@@ -51,5 +51,5 @@ python app.py
 And you can run React in another terminal from the project root directory with:
 
 ```bash
-npm start --prefix client
+npm start --prefix client-with-jwt
 ```
