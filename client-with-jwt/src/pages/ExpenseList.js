@@ -43,7 +43,8 @@ function ExpenseList() {
         console.error("Delete failed");
       }
     });
-}
+  } 
+
 
   return (
     <Wrapper>

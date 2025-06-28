@@ -71,7 +71,7 @@ class ExpensesIndex(Resource):
     def get(self):
         current_user_id = get_jwt_identity()
         expenses = Expense.query.filter_by(user_id=current_user_id).all()
-        ##expenses = [ExpenseSchema().dump(e) for e in Expense.query.all()] ##not all records
+        ##expenses = [ExpenseSchema().dump(e) for e in Expense.query.all()] ## all records
 
         result = [
             {
@@ -141,6 +141,26 @@ class ExpenseDetail(Resource):
             return {"message": "Expense deleted successfully"}, 200
         except Exception as e:
             return {"error": str(e)}, 500
+        
+    
+    @jwt_required()
+    def patch(self, id):
+        current_user_id = get_jwt_identity()
+        expense = Expense.query.filter_by(id=id, user_id=current_user_id).first()
+
+        if not expense:
+            return {'error': 'Expense not found or not yours'}, 404
+
+        data = request.get_json()
+        if 'purchase_item' in data:
+            expense.purchase_item = data['purchase_item']
+        if 'amount' in data:
+            expense.amount = data['amount']
+        if 'date' in data:
+            try:
+                expense.date = datetime.strptime(data['date'], "%Y-%m-%d").date()
+            except ValueError:
+                return {"errors": ["Invalid date format. Use YYYY-MM-DD."]}, 400
 
 
 
