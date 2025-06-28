@@ -70,8 +70,20 @@ class ExpensesIndex(Resource):
     @jwt_required()
     def get(self):
         current_user_id = get_jwt_identity()
-        expenses = Expense.query.filter_by(user_id=current_user_id).all()
-        ##expenses = [ExpenseSchema().dump(e) for e in Expense.query.all()] ## all records
+
+        # #pagination
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 5, type=int)
+
+        pagination = Expense.query.filter_by(user_id=current_user_id).order_by(Expense.date.desc()).paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
+
+        expenses = pagination.items
+        total_pages = pagination.pages
+        total_items = pagination.total
 
         result = [
             {
@@ -79,24 +91,17 @@ class ExpensesIndex(Resource):
                 "purchase_item": e.purchase_item,
                 "amount": e.amount,
                 "date": e.date.isoformat(),
-                # "user": {"username": current_user.username}  # optional
             }
             for e in expenses
         ]
 
-        return jsonify({"expenses": result})
-
-
-        # #pagination
-        # page = request.args.get("page", 1, type=int)
-        # per_page = request.args.get("per_page", 5, type=int)
-        # pagination = Expense.query.paginate(page=page, per_page=per_page, error_out=False)
-        # expenses = pagination.items
-
-        # return {
-        #     "expense_records_page": page,
-        #     "expenses": [ExpenseSchema().dump(e) for e in expenses]
-        # }
+        return jsonify({
+            "expenses": result,
+            "page": page,
+            "per_page": per_page,
+            "total_pages": total_pages,
+            "total_items": total_items
+        })
 
     
     @jwt_required()
