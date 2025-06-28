@@ -71,7 +71,7 @@ class ExpensesIndex(Resource):
     def get(self):
         current_user_id = get_jwt_identity()
         expenses = Expense.query.filter_by(user_id=current_user_id).all()
-        ##expenses = [ExpenseSchema().dump(e) for e in Expense.query.all()] ##not all records
+        ##expenses = [ExpenseSchema().dump(e) for e in Expense.query.all()] ## all records
 
         result = [
             {
@@ -124,10 +124,51 @@ class ExpensesIndex(Resource):
 
 
 
+class ExpenseDetail(Resource):
+    @jwt_required()
+    def delete(self, id):
+        expense = Expense.query.get(id)
+
+        if not expense:
+            return {"error": "Expense not found"}, 404
+
+        if expense.user_id != int(get_jwt_identity()):
+            return {"error": "Unauthorized"}, 403
+
+        try:
+            db.session.delete(expense)
+            db.session.commit()
+            return {"message": "Expense deleted successfully"}, 200
+        except Exception as e:
+            return {"error": str(e)}, 500
+        
+    
+    @jwt_required()
+    def patch(self, id):
+        current_user_id = get_jwt_identity()
+        expense = Expense.query.filter_by(id=id, user_id=current_user_id).first()
+
+        if not expense:
+            return {'error': 'Expense not found or not yours'}, 404
+
+        data = request.get_json()
+        if 'purchase_item' in data:
+            expense.purchase_item = data['purchase_item']
+        if 'amount' in data:
+            expense.amount = data['amount']
+        if 'date' in data:
+            try:
+                expense.date = datetime.strptime(data['date'], "%Y-%m-%d").date()
+            except ValueError:
+                return {"errors": ["Invalid date format. Use YYYY-MM-DD."]}, 400
+
+
+
 api.add_resource(Signup, '/signup', endpoint='signup')
 api.add_resource(WhoAmI, '/me', endpoint='me')
 api.add_resource(Login, '/login', endpoint='login')
 api.add_resource(ExpensesIndex, '/expenses', endpoint='expenses')
+api.add_resource(ExpenseDetail, '/expenses/<int:id>', endpoint='expense_detail')
 
 
 if __name__ == '__main__':
