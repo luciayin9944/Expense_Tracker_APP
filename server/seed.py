@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 
 from random import randint, choice as rc
-
 from faker import Faker
 from faker_commerce import Provider
-
 from app import app
 from models import db, Expense, User
 
@@ -16,8 +14,6 @@ with app.app_context():
     print("Deleting all records...")
     Expense.query.delete()
     User.query.delete()
-
-    fake = Faker()
 
     print("Creating users...")
 
@@ -32,12 +28,8 @@ with app.app_context():
             username = fake.first_name()
         usernames.append(username)
 
-        user = User(
-            username=username,
-        )
-
+        user = User(username=username)
         user.password_hash = user.username + 'password'
-
         users.append(user)
 
     db.session.add_all(users)
@@ -48,8 +40,8 @@ with app.app_context():
     
     for i in range(20):   
         expense = Expense(
-            purchase_item=fake.commerce.product(),
-            amount=fake.commerce.price(),
+            purchase_item=fake.ecommerce_name(),
+            amount=round(fake.pyfloat(positive=True, min_value=5, max_value=300), 2),
             date=fake.date_between(start_date='-1y', end_date='today'),
             user=rc(users)  # randomly assign a user
             #category=rc(categories),
