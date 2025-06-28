@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import NavBar from "./NavBar";
 import Login from "../pages/Login";
+import ExpenseList from "../pages/ExpenseList";
+import NewExpense from "../pages/NewExpense";
+import { Switch, Route } from "react-router-dom";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -28,7 +31,15 @@ function App() {
     <>
       <NavBar setUser={setUser} />
       <main>
-        <p>You are logged in!</p>
+        {/* <p>Welcome!</p> */}
+        <Switch>
+          <Route exact path="/new">
+            <NewExpense user={user} />
+          </Route>
+          <Route exact path="/">
+            <ExpenseList key={user.id + Date.now()} />
+          </Route>
+        </Switch>
       </main>
     </>
   );
