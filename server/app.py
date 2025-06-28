@@ -124,10 +124,31 @@ class ExpensesIndex(Resource):
 
 
 
+class ExpenseDetail(Resource):
+    @jwt_required()
+    def delete(self, id):
+        expense = Expense.query.get(id)
+
+        if not expense:
+            return {"error": "Expense not found"}, 404
+
+        if expense.user_id != int(get_jwt_identity()):
+            return {"error": "Unauthorized"}, 403
+
+        try:
+            db.session.delete(expense)
+            db.session.commit()
+            return {"message": "Expense deleted successfully"}, 200
+        except Exception as e:
+            return {"error": str(e)}, 500
+
+
+
 api.add_resource(Signup, '/signup', endpoint='signup')
 api.add_resource(WhoAmI, '/me', endpoint='me')
 api.add_resource(Login, '/login', endpoint='login')
 api.add_resource(ExpensesIndex, '/expenses', endpoint='expenses')
+api.add_resource(ExpenseDetail, '/expenses/<int:id>', endpoint='expense_detail')
 
 
 if __name__ == '__main__':
