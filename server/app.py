@@ -5,18 +5,19 @@ from flask_restful import Resource
 from sqlalchemy.exc import IntegrityError
 from config import app, db, api, jwt
 from models import User, Expense, UserSchema, ExpenseSchema
-from flask_jwt_extended import create_access_token, get_jwt_identity, verify_jwt_in_request
+from flask_jwt_extended import create_access_token, get_jwt_identity, verify_jwt_in_request, jwt_required
+from datetime import datetime
 
 
-@app.before_request
-def check_if_logged_in():                 
-    open_access_list = ['signup', 'login']
+# @app.before_request
+# def check_if_logged_in():                 
+#     open_access_list = ['signup', 'login']
     
-    if request.endpoint not in open_access_list:
-        try:
-            verify_jwt_in_request()
-        except:
-            return {'error': '401 Unauthorized'}, 401
+#     if request.endpoint not in open_access_list:
+#         try:
+#             verify_jwt_in_request()
+#         except:
+#             return {'error': '401 Unauthorized'}, 401
 
 
 class Signup(Resource):
@@ -40,6 +41,7 @@ class Signup(Resource):
 
 
 class WhoAmI(Resource):
+    @jwt_required()
     def get(self):
         user_id = get_jwt_identity()
         user = User.query.filter(User.id==user_id).first()
@@ -62,55 +64,70 @@ class Login(Resource):
         
         return {'errors': ['401 Unauthorized']}, 401
 
-# class Logout(Resource):
-#     pass
 
 
-
-class Expense(Resource):
+class ExpensesIndex(Resource):
+    @jwt_required()
     def get(self):
-        # expenses = [ExpenseSchema().dump(e) for e in Expense.query.all()]
-        # return expenses, 200
+        current_user_id = get_jwt_identity()
+        expenses = Expense.query.filter_by(user_id=current_user_id).all()
+        ##expenses = [ExpenseSchema().dump(e) for e in Expense.query.all()] ##not all records
 
-        #pagination
-        page = request.args.get("page", 1, type=int)
-        per_page = request.args.get("per_page", 5, type=int)
-        pagination = Expense.query.paginate(page=page, per_page=per_page, error_out=False)
-        expenses = pagination.items
+        result = [
+            {
+                "id": e.id,
+                "purchase_item": e.purchase_item,
+                "amount": e.amount,
+                "date": e.date.isoformat(),
+                # "user": {"username": current_user.username}  # optional
+            }
+            for e in expenses
+        ]
 
-        return {
-            "expense_records_page": page,
-            "expenses": [ExpenseSchema().dump(e) for e in expenses]
-        }
+        return jsonify({"expenses": result})
+
+
+        # #pagination
+        # page = request.args.get("page", 1, type=int)
+        # per_page = request.args.get("per_page", 5, type=int)
+        # pagination = Expense.query.paginate(page=page, per_page=per_page, error_out=False)
+        # expenses = pagination.items
+
+        # return {
+        #     "expense_records_page": page,
+        #     "expenses": [ExpenseSchema().dump(e) for e in expenses]
+        # }
 
     
-
+    @jwt_required()
     def post(self):
         data = request.get_json()
 
-        expense = Expense(
-            purchase_item = data.get('purchase_item'),
-            amount=data.get('amount'),
-            date = data.get('date'),
-            user_id = get_jwt_identity()
-        )
+        try:
+            date_obj = datetime.strptime(data["date"], "%Y-%m-%d").date()
+        except ValueError:
+            return {"errors": ["Invalid date format. Use YYYY-MM-DD."]}, 400
+
+        new_expense = Expense(
+            purchase_item=data["purchase_item"],
+            amount=data["amount"],
+            date=date_obj,  
+            user_id=get_jwt_identity(), 
+    )
 
         try:
-            db.session.add(expense)
+            db.session.add(new_expense)
             db.session.commit()
-            return ExpenseSchema().dump(expense), 201
+            return ExpenseSchema().dump(new_expense), 201
         except IntegrityError:
             return {'errors': ['422 Unprocessable Entity']}, 422
-
-
 
 
 
 api.add_resource(Signup, '/signup', endpoint='signup')
 api.add_resource(WhoAmI, '/me', endpoint='me')
 api.add_resource(Login, '/login', endpoint='login')
-#api.add_resource(Logout, '/logout', endpoint='logout')
-api.add_resource(Expense, '/expenses', endpoint='expenses')
+api.add_resource(ExpensesIndex, '/expenses', endpoint='expenses')
 
 
 if __name__ == '__main__':

@@ -12,11 +12,14 @@ function NavBar({ setUser }) {
   return (
     <Wrapper>
       <Logo>
-        <Link to="/">My App</Link>
+        <Link to="/">Expense Tracker</Link>
       </Logo>
       <Nav>
-        <Button>
-          Do Something
+        <Button as={Link} to="/">
+          My Page
+        </Button>
+        <Button as={Link} to="/new">
+          New Recipe
         </Button>
         <Button variant="outline" onClick={handleLogoutClick}>
           Logout
