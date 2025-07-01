@@ -157,15 +157,25 @@ class ExpenseDetail(Resource):
             return {'error': 'Expense not found or not yours'}, 404
 
         data = request.get_json()
-        if 'purchase_item' in data:
-            expense.purchase_item = data['purchase_item']
-        if 'amount' in data:
-            expense.amount = data['amount']
-        if 'date' in data:
-            try:
+        print(f"PATCH /expenses/{id} with data: {data}")
+        try:
+            if 'purchase_item' in data:
+                expense.purchase_item = data['purchase_item']
+            if 'amount' in data:
+                expense.amount = float(data['amount'])  
+            if 'date' in data:
                 expense.date = datetime.strptime(data['date'], "%Y-%m-%d").date()
-            except ValueError:
-                return {"errors": ["Invalid date format. Use YYYY-MM-DD."]}, 400
+                
+            db.session.commit()  
+            return ExpenseSchema().dump(expense), 200 
+        except ValueError as e:
+            return {"errors": [str(e)]}, 400
+        except Exception as e:
+            db.session.rollback()
+
+            import traceback
+            traceback.print_exc()  # 打印完整的错误栈
+            return {"error": str(e)}, 500
 
 
 
