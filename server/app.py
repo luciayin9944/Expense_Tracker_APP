@@ -9,17 +9,6 @@ from flask_jwt_extended import create_access_token, get_jwt_identity, verify_jwt
 from datetime import datetime
 
 
-# @app.before_request
-# def check_if_logged_in():                 
-#     open_access_list = ['signup', 'login']
-    
-#     if request.endpoint not in open_access_list:
-#         try:
-#             verify_jwt_in_request()
-#         except:
-#             return {'error': '401 Unauthorized'}, 401
-
-
 class Signup(Resource):
     def post(self):
         data = request.get_json()
@@ -174,7 +163,7 @@ class ExpenseDetail(Resource):
             db.session.rollback()
 
             import traceback
-            traceback.print_exc()  # 打印完整的错误栈
+            traceback.print_exc()  #print error
             return {"error": str(e)}, 500
 
 
