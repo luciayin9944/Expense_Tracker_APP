@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import styled from "styled-components";
 import { Box, Button } from "../styles";
 
@@ -12,27 +12,39 @@ function ExpenseList() {
     date: ""
   });
 
+  const [filterYear, setFilterYear] = useState("");
+  const [filterMonth, setFilterMonth] = useState("")
+
+  const location = useLocation();
+
   useEffect(() => {
-    fetch("/expenses", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`
-      }
-    })
-      .then((r) => {
-        if (r.ok) {
-          return r.json();
-        } else {
-          throw new Error("Unauthorized or failed to fetch");
+    if (location.pathname === "/") {
+      setFilterYear("");
+      setFilterMonth("");
+      fetch("/expenses", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
         }
       })
-      .then((data) => {
-        setExpenses(data.expenses || []);
-      })
-      .catch((error) => {
-        console.error("Error fetching expenses:", error);
-        setExpenses([]);
-      });
-  }, []);
+        .then((r) => {
+          if (r.ok) {
+            return r.json();
+          } else {
+            throw new Error("Unauthorized or failed to fetch");
+          }
+        })
+        .then((data) => {
+          setExpenses(data.expenses || []);
+          // clear filter
+          setFilterYear(""); 
+          setFilterMonth("");
+        })
+        .catch((error) => {
+          console.error("Error fetching expenses:", error);
+          setExpenses([]);
+        });
+    }
+  }, [location]);
 
   function handleDelete(id) {
   fetch(`/expenses/${id}`, {
@@ -69,39 +81,6 @@ function ExpenseList() {
   }
 
 
-  // function handleEditSubmit(id) {
-  //   fetch(`/expenses/${id}`, {
-  //     method: "PATCH",
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //       Authorization: `Bearer ${localStorage.getItem("token")}`
-  //     },
-  //     body: JSON.stringify(editFormData)
-  //   })
-  //   .then((r) => {
-  //     if (r.ok) {
-  //       return r.json();
-  //     } else {
-  //       throw new Error("Failed to update expense");
-  //     }
-  //   })
-  //   .then((updatedExpense) => {
-  //     setExpenses(expenses.map(expense => 
-  //       expense.id === id ? updatedExpense : expense
-  //     ));
-  //     setEditingId(null)
-  //   })
-  //   .catch((error) => {
-  //     console.error("Error updating expense:", error);
-  //     alert(`Update failed: ${error.message}\nCheck console for details`);
-  //     if (error.message.includes("401")) {
-  //       // 处理token过期
-  //       localStorage.removeItem("token");
-  //       window.location.href = "/login";
-  //     }
-  //   })
-  // }
-
   function handleEditSubmit(id) {
     fetch(`/expenses/${id}`, {
       method: "PATCH",
@@ -133,69 +112,122 @@ function ExpenseList() {
 
 
 
+  function handleFilter() {
+    const queryParams = new URLSearchParams();
+    if (filterYear) queryParams.append("year", filterYear);
+    if (filterMonth) queryParams.append("month", filterMonth);
+
+    fetch(`/expenses/filter?${queryParams.toString()}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      }
+    })
+    .then((r) => {
+      if (r.ok)
+        return r.json();
+      //else:
+      throw new Error("Filter failed");
+    })
+    .then((data) => {
+      setExpenses(data.expenses || []);
+    })
+    .catch((err) => {
+      console.error("Error filtering:", err);
+    });
+  }
+
+
+
 
   return (
-    <Wrapper>
-      {expenses.length > 0 ? (
-        expenses.map((expense) => (
-          <ExpenseCard key={expense.id}>
-            <Box>
-              {editingId === expense.id ? (
-                <EditForm>
-                  <input
-                    type="text"
-                    name="purchase_item"
-                    value={editFormData.purchase_item}
-                    onChange={handleEditFormChange}
-                  />
-                  <input
-                    type="number"
-                    name="amount"
-                    value={editFormData.amount}
-                    onChange={handleEditFormChange}
-                  />
-                  <input
-                    type="date"
-                    name="date"
-                    value={editFormData.date}
-                    onChange={handleEditFormChange}
-                  />
-                  <Button onClick={() => handleEditSubmit(expense.id)}>
-                    Save
-                  </Button>
-                  <Button onClick={handleCancelEdit}>
-                    Cancel
-                  </Button>
-                </EditForm>
-              ) : (
-                <>
-                  <h2>{expense.purchase_item}</h2>
-                  <p>
-                    💵 Amount: ${expense.amount}
-                    <br />
-                    📅 Date: {new Date(expense.date).toLocaleDateString()}
-                    <br />
-                  </p>
-                  <Button onClick={() => handleEdit(expense)}>
-                    Edit
-                  </Button>
-                  <Button onClick={() => handleDelete(expense.id)}>
-                    Delete
-                  </Button>
-                </>
-              )}
-                </Box>
-          </ExpenseCard>
-        ))
-      ) : (
-        <>
-          <h2>No Expense Records Found</h2>
-          <Button as={Link} to="/new">
-            Add a New Expense
-          </Button>
-        </>
-      )}
-    </Wrapper>
+    <div>
+      <FilterWrapper>
+        <Button onClick={handleFilter}>Filter</Button>
+        <label>
+          Year:
+          <select value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
+            <option value="">All</option>
+            <option value="2022">2022</option>
+            <option value="2023">2023</option>
+            <option value="2024">2024</option>
+            <option value="2025">2025</option>
+          </select>
+        </label>
+
+        <label>
+          Month:
+          <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}>
+            <option value="">All</option>
+            {[...Array(12)].map((_, i) => {
+              const value = String(i + 1).padStart(2, "0");
+              return <option key={value} value={value}>{value}</option>;
+            })}
+          </select>
+        </label>
+      </FilterWrapper>
+  
+      <Wrapper>
+        {expenses.length > 0 ? (
+          expenses.map((expense) => (
+            <ExpenseCard key={expense.id}>
+              <Box>
+                {editingId === expense.id ? (
+                  <EditForm>
+                    <input
+                      type="text"
+                      name="purchase_item"
+                      value={editFormData.purchase_item}
+                      onChange={handleEditFormChange}
+                    />
+                    <input
+                      type="number"
+                      name="amount"
+                      value={editFormData.amount}
+                      onChange={handleEditFormChange}
+                    />
+                    <input
+                      type="date"
+                      name="date"
+                      value={editFormData.date}
+                      onChange={handleEditFormChange}
+                    />
+                    <Button onClick={() => handleEditSubmit(expense.id)}>
+                      Save
+                    </Button>
+                    <Button onClick={handleCancelEdit}>
+                      Cancel
+                    </Button>
+                  </EditForm>
+                ) : (
+                  <>
+                    <h2>{expense.purchase_item}</h2>
+                    <p>
+                      💵 Amount: ${expense.amount}
+                      <br />
+                      📅 Date: {new Date(expense.date).toLocaleDateString()}
+                      <br />
+                    </p>
+                    <Button onClick={() => handleEdit(expense)}>
+                      Edit
+                    </Button>
+                    <Button onClick={() => handleDelete(expense.id)}>
+                      Delete
+                    </Button>
+                  </>
+                )}
+                  </Box>
+            </ExpenseCard>
+          ))
+        ) : (
+          <>
+            <h2>No Expense Records Found</h2>
+            <Button as={Link} to="/new">
+              Add a New Expense
+            </Button>
+          </>
+        )}
+      </Wrapper>
+    </div>
   );
 }
 
@@ -224,6 +256,14 @@ const EditForm = styled.div`
     border-radius: 4px;
     font-size: 16px;
   }
+`;
+
+const FilterWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin: 20px auto;
 `;
 
 

@@ -63,11 +63,10 @@ function NewExpense({ user }) {
             />
           </FormField>
           <FormField>
-            <Label htmlFor="date">Date (YYYY-MM-DD)</Label>
+            <Label htmlFor="date">Date</Label>
             <Input
-                type="text"
+                type="date"
                 id="date"
-                placeholder="e.g. 2024-06-27"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
             />

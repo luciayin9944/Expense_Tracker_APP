@@ -1,12 +1,18 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import styled from "styled-components";
 import { Button } from "../styles";
 
 function NavBar({ setUser }) {
+  const history = useHistory();
+
   function handleLogoutClick() {
     localStorage.removeItem("token");
     setUser(null);
+  }
+
+  function handleMyPageClick() {
+    history.push("/");
   }
 
   return (
@@ -15,7 +21,8 @@ function NavBar({ setUser }) {
         <Link to="/">Expense Tracker</Link>
       </Logo>
       <Nav>
-        <Button as={Link} to="/">
+        {/* <Button as={Link} to="/"> */}
+        <Button onClick={handleMyPageClick}>
           My Page
         </Button>
         <Button as={Link} to="/new">

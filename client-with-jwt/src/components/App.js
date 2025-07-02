@@ -38,7 +38,7 @@ function App() {
         {/* <p>Welcome!</p> */}
         <Switch>
           <Route exact path="/new">
-            <NewExpense user={user} />
+            <NewExpense user={user} key={Date.now()} />
           </Route>
           <Route exact path="/">
             <ExpenseList userId={user.id} />
