@@ -8,6 +8,7 @@ function ExpenseList() {
   const [editingId, setEditingId] = useState(null);
   const [editFormData, setEditFormData] = useState({
     purchase_item: "",
+    category: "",
     amount: "",
     date: ""
   });
@@ -35,8 +36,9 @@ function ExpenseList() {
           }
         })
         .then((data) => {
+          // console.log("Loaded expenses:", data);
           setExpenses(data.expenses || []);
-          // clear filter
+          // //clear filter
           setFilterYear(""); 
           setFilterMonth("");
         })
@@ -68,6 +70,7 @@ function ExpenseList() {
     setEditingId(expense.id);
     setEditFormData({
       purchase_item: expense.purchase_item,
+      category: expense.category,
       amount: expense.amount,
       date: expense.date.slice(0, 10)
     });
@@ -182,6 +185,19 @@ function ExpenseList() {
                       value={editFormData.purchase_item}
                       onChange={handleEditFormChange}
                     />
+                    <select
+                      name="category"
+                      value={editFormData.category}
+                      onChange={handleEditFormChange}
+                    >
+                      <option value="Food">Food</option>
+                      <option value="Clothing">Clothing</option>
+                      <option value="Travel">Travel</option>
+                      <option value="Utilities">Utilities</option>
+                      <option value="Entertainment">Entertainment</option>
+                      <option value="Health">Health</option>
+                      <option value="Other">Other</option>
+                    </select>
                     <input
                       type="number"
                       name="amount"
@@ -205,6 +221,8 @@ function ExpenseList() {
                   <>
                     <h2>{expense.purchase_item}</h2>
                     <p>
+                      📂 Category: {expense.category}
+                      <br />
                       💵 Amount: ${expense.amount}
                       <br />
                       📅 Date: {new Date(expense.date).toLocaleDateString()}

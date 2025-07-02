@@ -74,15 +74,19 @@ class ExpensesIndex(Resource):
         total_pages = pagination.pages
         total_items = pagination.total
 
-        result = [
-            {
-                "id": e.id,
-                "purchase_item": e.purchase_item,
-                "amount": e.amount,
-                "date": e.date.isoformat(),
-            }
-            for e in expenses
-        ]
+        # result = [
+        #     {
+        #         "id": e.id,
+        #         "purchase_item": e.purchase_item,
+        #         "amount": e.amount,
+        #         "date": e.date.isoformat(),
+        #         "category": e.category,
+        #     }
+        #     for e in expenses
+        # ]
+
+        ## use schema
+        result = ExpenseSchema(many=True).dump(expenses)
 
         return jsonify({
             "expenses": result,
@@ -105,6 +109,7 @@ class ExpensesIndex(Resource):
         new_expense = Expense(
             purchase_item=data["purchase_item"],
             amount=data["amount"],
+            category=data.get("category", "Other"),
             date=date_obj,  
             user_id=get_jwt_identity(), 
     )
@@ -146,15 +151,14 @@ class ExpenseDetail(Resource):
             return {'error': 'Expense not found or not yours'}, 404
 
         data = request.get_json()
-        print(f"PATCH /expenses/{id} with data: {data}")
-        try:
-            if 'purchase_item' in data:
-                expense.purchase_item = data['purchase_item']
-            if 'amount' in data:
-                expense.amount = float(data['amount'])  
-            if 'date' in data:
-                expense.date = datetime.strptime(data['date'], "%Y-%m-%d").date()
-                
+        #print(f"PATCH /expenses/{id} with data: {data}")
+
+        expense.purchase_item = data.get("purchase_item", expense.purchase_item)
+        expense.amount = data.get("amount", expense.amount)
+        expense.date = datetime.strptime(data["date"], "%Y-%m-%d").date() if "date" in data else expense.date
+        expense.category = data.get("category", expense.category)
+
+        try:       
             db.session.commit()  
             return ExpenseSchema().dump(expense), 200 
         except ValueError as e:
@@ -162,9 +166,9 @@ class ExpenseDetail(Resource):
         except Exception as e:
             db.session.rollback()
 
-            import traceback
-            traceback.print_exc()  #print error
-            return {"error": str(e)}, 500
+            # import traceback
+            # traceback.print_exc()  #print error
+            # return {"error": str(e)}, 500
         
 
         
@@ -211,10 +215,13 @@ class FilterRecords(Resource):
             e = {
                     "id": e.id,
                     "purchase_item": e.purchase_item,
+                    "category": e.category,
                     "amount": e.amount,
                     "date": e.date.isoformat()
             }
             result.append(e)
+        
+        #print("FILTERED expenses result:", result)
 
         return jsonify({"expenses": result})
             

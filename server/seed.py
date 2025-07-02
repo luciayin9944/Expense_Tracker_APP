@@ -36,15 +36,15 @@ with app.app_context():
 
     print("Creating expenses...")
     expenses = []
-    #categories = ['Food', 'Utilities', 'Clothing']
+    categories = ['Food', 'Utilities', 'Clothing', 'Travel', 'Entertainment', 'Health', 'Other']
     
     for i in range(20):   
         expense = Expense(
             purchase_item=fake.ecommerce_name(),
             amount=round(fake.pyfloat(positive=True, min_value=5, max_value=300), 2),
             date=fake.date_between(start_date='-1y', end_date='today'),
+            category=rc(categories),
             user=rc(users)  # randomly assign a user
-            #category=rc(categories),
         )
         expenses.append(expense)
 
