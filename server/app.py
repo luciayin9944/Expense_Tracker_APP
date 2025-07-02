@@ -9,17 +9,6 @@ from flask_jwt_extended import create_access_token, get_jwt_identity, verify_jwt
 from datetime import datetime
 
 
-# @app.before_request
-# def check_if_logged_in():                 
-#     open_access_list = ['signup', 'login']
-    
-#     if request.endpoint not in open_access_list:
-#         try:
-#             verify_jwt_in_request()
-#         except:
-#             return {'error': '401 Unauthorized'}, 401
-
-
 class Signup(Resource):
     def post(self):
         data = request.get_json()
@@ -41,9 +30,9 @@ class Signup(Resource):
 
 
 class WhoAmI(Resource):
-    @jwt_required()
+    @jwt_required() # Ensure the user is authenticated using JWT
     def get(self):
-        user_id = get_jwt_identity()
+        user_id = get_jwt_identity() ## Get the user's ID from the JWT token
         user = User.query.filter(User.id==user_id).first()
 
         return UserSchema().dump(user), 200
@@ -69,13 +58,13 @@ class Login(Resource):
 class ExpensesIndex(Resource):
     @jwt_required()
     def get(self):
-        current_user_id = get_jwt_identity()
+        curr_user_id = get_jwt_identity()
 
         # #pagination
         page = request.args.get("page", 1, type=int)
         per_page = request.args.get("per_page", 5, type=int)
 
-        pagination = Expense.query.filter_by(user_id=current_user_id).order_by(Expense.date.desc()).paginate(
+        pagination = Expense.query.filter_by(user_id=curr_user_id).order_by(Expense.date.desc()).paginate(
             page=page,
             per_page=per_page,
             error_out=False
@@ -157,15 +146,79 @@ class ExpenseDetail(Resource):
             return {'error': 'Expense not found or not yours'}, 404
 
         data = request.get_json()
-        if 'purchase_item' in data:
-            expense.purchase_item = data['purchase_item']
-        if 'amount' in data:
-            expense.amount = data['amount']
-        if 'date' in data:
-            try:
+        print(f"PATCH /expenses/{id} with data: {data}")
+        try:
+            if 'purchase_item' in data:
+                expense.purchase_item = data['purchase_item']
+            if 'amount' in data:
+                expense.amount = float(data['amount'])  
+            if 'date' in data:
                 expense.date = datetime.strptime(data['date'], "%Y-%m-%d").date()
-            except ValueError:
-                return {"errors": ["Invalid date format. Use YYYY-MM-DD."]}, 400
+                
+            db.session.commit()  
+            return ExpenseSchema().dump(expense), 200 
+        except ValueError as e:
+            return {"errors": [str(e)]}, 400
+        except Exception as e:
+            db.session.rollback()
+
+            import traceback
+            traceback.print_exc()  #print error
+            return {"error": str(e)}, 500
+        
+
+        
+class FilterRecords(Resource):
+    @jwt_required()
+    def get(self):
+        curr_user_id = get_jwt_identity()
+
+        # Get year and month parameters from query string (e.g., /expenses/filter?year=2025&month=06)
+        year = request.args.get("year")
+        month = request.args.get("month")
+
+        query = Expense.query.filter_by(user_id=curr_user_id) 
+
+        try:
+            if year:
+                year = int(year)
+            if month:
+                month = int(month)
+
+            # Filter by both year and month
+            if year and month:
+                start_date = datetime(year, month, 1)
+                end_date = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
+                filteredQuery = query.filter(Expense.date >= start_date, Expense.date < end_date)
+
+            # Filter by year only
+            elif year:
+                start_date = datetime(year, 1, 1)
+                end_date = datetime(year + 1, 1, 1)
+                filteredQuery = query.filter(Expense.date >= start_date, Expense.date < end_date)
+
+            # No filter
+            else:
+                filteredQuery = query
+
+        except ValueError:
+            return {"error": "Invalid year or month"}, 400
+            
+        # Execute the SQL query and retrieve all matching results
+        filtered_expenses = filteredQuery.all()
+        result = []
+        for e in filtered_expenses:
+            e = {
+                    "id": e.id,
+                    "purchase_item": e.purchase_item,
+                    "amount": e.amount,
+                    "date": e.date.isoformat()
+            }
+            result.append(e)
+
+        return jsonify({"expenses": result})
+            
+
 
 
 
@@ -174,6 +227,7 @@ api.add_resource(WhoAmI, '/me', endpoint='me')
 api.add_resource(Login, '/login', endpoint='login')
 api.add_resource(ExpensesIndex, '/expenses', endpoint='expenses')
 api.add_resource(ExpenseDetail, '/expenses/<int:id>', endpoint='expense_detail')
+api.add_resource(FilterRecords, '/expenses/filter', endpoint='filter_expenses')
 
 
 if __name__ == '__main__':

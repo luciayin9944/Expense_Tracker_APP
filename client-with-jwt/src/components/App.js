@@ -16,6 +16,10 @@ function App() {
     }).then((r) => {
       if (r.ok) {
         r.json().then((user) => setUser(user));
+      } else {
+        // 如果 token 无效，清除并重定向登录
+        localStorage.removeItem("token");
+        setUser(null);
       }
     });
   }, []);
@@ -34,10 +38,10 @@ function App() {
         {/* <p>Welcome!</p> */}
         <Switch>
           <Route exact path="/new">
-            <NewExpense user={user} />
+            <NewExpense user={user} key={Date.now()} />
           </Route>
           <Route exact path="/">
-            <ExpenseList key={user.id + Date.now()} />
+            <ExpenseList userId={user.id} />
           </Route>
         </Switch>
       </main>
