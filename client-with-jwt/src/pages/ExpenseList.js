@@ -14,8 +14,9 @@ function ExpenseList() {
 
   const [filterYear, setFilterYear] = useState("");
   const [filterMonth, setFilterMonth] = useState("")
-
   const location = useLocation();
+
+  const totalExpense = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
 
   useEffect(() => {
     if (location.pathname === "/") {
@@ -153,7 +154,6 @@ function ExpenseList() {
             <option value="2025">2025</option>
           </select>
         </label>
-
         <label>
           Month:
           <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}>
@@ -165,6 +165,9 @@ function ExpenseList() {
           </select>
         </label>
       </FilterWrapper>
+      <p style={{ textAlign: "center", fontWeight: "bold", marginTop: "20px" }}>
+        Total Expense: ${totalExpense.toFixed(2)}
+      </p>
   
       <Wrapper>
         {expenses.length > 0 ? (
