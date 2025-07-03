@@ -36,7 +36,7 @@ with app.app_context():
 
     print("Creating expenses...")
     expenses = []
-    categories = ['Food', 'Utilities', 'Clothing', 'Travel', 'Entertainment', 'Health', 'Other']
+    categories = ['Food', 'Utilities', 'Clothing', 'Home', 'Travel', 'Entertainment', 'Health', 'Other']
     
     for i in range(20):   
         expense = Expense(

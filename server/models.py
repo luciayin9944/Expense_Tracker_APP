@@ -46,7 +46,7 @@ class Expense(db.Model):
 
     @validates("category")
     def validate_category(self, key, value):
-        allowed = {'Food', 'Utilities', 'Clothing', 'Travel', 'Entertainment', 'Health', 'Other'}
+        allowed = {'Food', 'Utilities', 'Clothing', 'Home', 'Travel', 'Entertainment', 'Health', 'Other'}
         if value not in allowed:
             raise ValueError(f"Invalid category: {value}")
         return value

@@ -64,6 +64,7 @@ function NewExpense({ user }) {
               <option value="">-- Select a Category --</option>
               <option value="Food">Food</option>
               <option value="Clothing">Clothing</option>
+              <option value="Home">Home</option>
               <option value="Travel">Travel</option>
               <option value="Utilities">Utilities</option>
               <option value="Entertainment">Entertainment</option>

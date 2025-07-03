@@ -11,8 +11,8 @@ const COLORS = [
 
 function ExpenseSummary() {
   const [data, setData] = useState([]);
-  const [filterYear, setFilterYear] = useState("2025");
-  const [filterMonth, setFilterMonth] = useState("06");
+  const [filterYear, setFilterYear] = useState("");
+  const [filterMonth, setFilterMonth] = useState("");
 
   useEffect(() => {
     const query = new URLSearchParams();
@@ -130,7 +130,7 @@ function ExpenseSummary() {
 export default ExpenseSummary;
 
 
-
+// styled-component
 const FlexWrapper = styled.div`
   display: flex;
   justify-content: center;

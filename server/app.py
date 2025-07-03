@@ -57,70 +57,109 @@ class Login(Resource):
 
 
 class ExpensesIndex(Resource):
+    ## pagination + filter
     @jwt_required()
     def get(self):
         curr_user_id = get_jwt_identity()
 
-        # #pagination
-        page = request.args.get("page", 1, type=int)
+        ##GET /expenses?page=2&per_page=5&year=2025&month=06
+        page = request.args.get("page", 1, type=int) #get("param_name", default, type=type)
         per_page = request.args.get("per_page", 5, type=int)
+        year = request.args.get("year")
+        month = request.args.get("month")
+        print(f"==> Query Params - page: {page}, per_page: {per_page}, year: {year}, month: {month}")
 
-        pagination = Expense.query.filter_by(user_id=curr_user_id).order_by(Expense.date.desc()).paginate(
-            page=page,
-            per_page=per_page,
+        try:
+            query = get_filtered_query_by_date_range(curr_user_id , year, month)
+        except ValueError:
+            return {"error": "Invalid year or month"}, 400
+        
+        pagination = query.order_by(Expense.date.desc()).paginate(
+            page=page, 
+            per_page=per_page, 
             error_out=False
         )
 
         expenses = pagination.items
-        total_pages = pagination.pages
-        total_items = pagination.total
-
-        # result = [
-        #     {
-        #         "id": e.id,
-        #         "purchase_item": e.purchase_item,
-        #         "amount": e.amount,
-        #         "date": e.date.isoformat(),
-        #         "category": e.category,
-        #     }
-        #     for e in expenses
-        # ]
-
-        ## use schema
         result = ExpenseSchema(many=True).dump(expenses)
 
         return jsonify({
             "expenses": result,
             "page": page,
             "per_page": per_page,
-            "total_pages": total_pages,
-            "total_items": total_items
+            "total_pages": pagination.pages,
+            "total_items": pagination.total
         })
+    
+        @jwt_required()
+        def post(self):
+            data = request.get_json()
+
+            try:
+                date_obj = datetime.strptime(data["date"], "%Y-%m-%d").date()
+            except ValueError:
+                return {"errors": ["Invalid date format. Use YYYY-MM-DD."]}, 400
+
+            new_expense = Expense(
+                purchase_item=data["purchase_item"],
+                amount=data["amount"],
+                category=data.get("category", "Other"),
+                date=date_obj,  
+                user_id=get_jwt_identity(), 
+        )
+
+            try:
+                db.session.add(new_expense)
+                db.session.commit()
+                return ExpenseSchema().dump(new_expense), 201
+            except IntegrityError:
+                return {'errors': ['422 Unprocessable Entity']}, 422
+        
+
+
+
+    ## only pagination
+    # @jwt_required()
+    # def get(self):
+    #     curr_user_id = get_jwt_identity()
+
+    #     page = request.args.get("page", 1, type=int)
+    #     per_page = request.args.get("per_page", 5, type=int)
+
+    #     pagination = Expense.query.filter_by(user_id=curr_user_id).order_by(Expense.date.desc()).paginate(
+    #         page=page,
+    #         per_page=per_page,
+    #         error_out=False
+    #     )
+
+    #     expenses = pagination.items
+    #     total_pages = pagination.pages
+    #     total_items = pagination.total
+
+    #     # result = [
+    #     #     {
+    #     #         "id": e.id,
+    #     #         "purchase_item": e.purchase_item,
+    #     #         "amount": e.amount,
+    #     #         "date": e.date.isoformat(),
+    #     #         "category": e.category,
+    #     #     }
+    #     #     for e in expenses
+    #     # ]
+
+    #     ## use schema
+    #     result = ExpenseSchema(many=True).dump(expenses)
+
+    #     return jsonify({
+    #         "expenses": result,
+    #         "page": page,
+    #         "per_page": per_page,
+    #         "total_pages": total_pages,
+    #         "total_items": total_items
+    #     })
 
     
-    @jwt_required()
-    def post(self):
-        data = request.get_json()
 
-        try:
-            date_obj = datetime.strptime(data["date"], "%Y-%m-%d").date()
-        except ValueError:
-            return {"errors": ["Invalid date format. Use YYYY-MM-DD."]}, 400
-
-        new_expense = Expense(
-            purchase_item=data["purchase_item"],
-            amount=data["amount"],
-            category=data.get("category", "Other"),
-            date=date_obj,  
-            user_id=get_jwt_identity(), 
-    )
-
-        try:
-            db.session.add(new_expense)
-            db.session.commit()
-            return ExpenseSchema().dump(new_expense), 201
-        except IntegrityError:
-            return {'errors': ['422 Unprocessable Entity']}, 422
 
 
 
@@ -209,32 +248,6 @@ class FilterRecords(Resource):
         year = request.args.get("year")
         month = request.args.get("month")
 
-        # query = Expense.query.filter_by(user_id=curr_user_id) 
-
-        # try:
-        #     if year:
-        #         year = int(year)
-        #     if month:
-        #         month = int(month)
-
-        #     # Filter by both year and month
-        #     if year and month:
-        #         start_date = datetime(year, month, 1)
-        #         end_date = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
-        #         filteredQuery = query.filter(Expense.date >= start_date, Expense.date < end_date)
-
-        #     # Filter by year only
-        #     elif year:
-        #         start_date = datetime(year, 1, 1)
-        #         end_date = datetime(year + 1, 1, 1)
-        #         filteredQuery = query.filter(Expense.date >= start_date, Expense.date < end_date)
-
-        #     # No filter
-        #     else:
-        #         filteredQuery = query
-
-        # except ValueError:
-        #     return {"error": "Invalid year or month"}, 400
         try:
             query = get_filtered_query_by_date_range(curr_user_id , year, month)
         except ValueError:

@@ -23,7 +23,7 @@ function NavBar({ setUser }) {
       <Nav>
         {/* <Button as={Link} to="/"> */}
         <Button onClick={handleMyPageClick}>
-          My Page
+          Expense Records
         </Button>
         <Button as={Link} to="/new">
           New Expense
