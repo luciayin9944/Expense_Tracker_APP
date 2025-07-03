@@ -7,6 +7,7 @@ from config import app, db, api, jwt
 from models import User, Expense, UserSchema, ExpenseSchema
 from flask_jwt_extended import create_access_token, get_jwt_identity, verify_jwt_in_request, jwt_required
 from datetime import datetime
+from sqlalchemy import func
 
 
 class Signup(Resource):
@@ -171,7 +172,34 @@ class ExpenseDetail(Resource):
             # return {"error": str(e)}, 500
         
 
-        
+def get_filtered_query_by_date_range(user_id, year=None, month=None):
+    query = Expense.query.filter_by(user_id=user_id)
+
+    try:
+        if year:
+            year = int(year)
+        if month:
+            month = int(month)
+
+        if year and month:
+            start_date = datetime(year, month, 1)
+            end_date = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
+            filteredQuery = query.filter(Expense.date >= start_date, Expense.date < end_date)
+        elif year:
+            start_date = datetime(year, 1, 1)
+            end_date = datetime(year + 1, 1, 1)
+            filteredQuery = query.filter(Expense.date >= start_date, Expense.date < end_date)
+        else:
+            filteredQuery = query
+
+    except ValueError:
+        raise ValueError("Invalid year or month")
+
+    return filteredQuery
+
+
+
+
 class FilterRecords(Resource):
     @jwt_required()
     def get(self):
@@ -181,35 +209,40 @@ class FilterRecords(Resource):
         year = request.args.get("year")
         month = request.args.get("month")
 
-        query = Expense.query.filter_by(user_id=curr_user_id) 
+        # query = Expense.query.filter_by(user_id=curr_user_id) 
 
+        # try:
+        #     if year:
+        #         year = int(year)
+        #     if month:
+        #         month = int(month)
+
+        #     # Filter by both year and month
+        #     if year and month:
+        #         start_date = datetime(year, month, 1)
+        #         end_date = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
+        #         filteredQuery = query.filter(Expense.date >= start_date, Expense.date < end_date)
+
+        #     # Filter by year only
+        #     elif year:
+        #         start_date = datetime(year, 1, 1)
+        #         end_date = datetime(year + 1, 1, 1)
+        #         filteredQuery = query.filter(Expense.date >= start_date, Expense.date < end_date)
+
+        #     # No filter
+        #     else:
+        #         filteredQuery = query
+
+        # except ValueError:
+        #     return {"error": "Invalid year or month"}, 400
         try:
-            if year:
-                year = int(year)
-            if month:
-                month = int(month)
-
-            # Filter by both year and month
-            if year and month:
-                start_date = datetime(year, month, 1)
-                end_date = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
-                filteredQuery = query.filter(Expense.date >= start_date, Expense.date < end_date)
-
-            # Filter by year only
-            elif year:
-                start_date = datetime(year, 1, 1)
-                end_date = datetime(year + 1, 1, 1)
-                filteredQuery = query.filter(Expense.date >= start_date, Expense.date < end_date)
-
-            # No filter
-            else:
-                filteredQuery = query
-
+            query = get_filtered_query_by_date_range(curr_user_id , year, month)
         except ValueError:
             return {"error": "Invalid year or month"}, 400
+        
             
         # Execute the SQL query and retrieve all matching results
-        filtered_expenses = filteredQuery.all()
+        filtered_expenses = query.all()
         result = []
         for e in filtered_expenses:
             e = {
@@ -222,10 +255,29 @@ class FilterRecords(Resource):
             result.append(e)
         
         #print("FILTERED expenses result:", result)
-
         return jsonify({"expenses": result})
             
 
+class CategorySummary(Resource):
+    @jwt_required()
+    def get(self):
+        user_id = get_jwt_identity()
+        year = request.args.get("year")
+        month = request.args.get("month")
+
+        try:
+            query = get_filtered_query_by_date_range(user_id, year, month)
+        except ValueError:
+            return {"error": "Invalid year or month"}, 400
+        
+        results = query.with_entities(
+            Expense.category,
+            func.sum(Expense.amount).label("total")
+        ).group_by(Expense.category).all()
+        
+        return jsonify([
+            {"category": category, "total": float(total)} for category, total in results
+        ])
 
 
 
@@ -235,6 +287,7 @@ api.add_resource(Login, '/login', endpoint='login')
 api.add_resource(ExpensesIndex, '/expenses', endpoint='expenses')
 api.add_resource(ExpenseDetail, '/expenses/<int:id>', endpoint='expense_detail')
 api.add_resource(FilterRecords, '/expenses/filter', endpoint='filter_expenses')
+api.add_resource(CategorySummary, '/expenses/summary_by_category', endpoint='summary_by_category')
 
 
 if __name__ == '__main__':

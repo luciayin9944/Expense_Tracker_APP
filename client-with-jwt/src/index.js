@@ -3,6 +3,7 @@ import ReactDOM from "react-dom";
 import App from "./components/App";
 import { BrowserRouter } from "react-router-dom";
 import { createGlobalStyle } from "styled-components";
+import { createRoot } from "react-dom/client";
 
 const GlobalStyle = createGlobalStyle`
   *,
@@ -20,10 +21,23 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-ReactDOM.render(
+// React18 Version
+const container = document.getElementById("root");
+const root = createRoot(container);
+
+root.render(
   <BrowserRouter>
     <GlobalStyle />
     <App />
-  </BrowserRouter>,
-  document.getElementById("root")
+  </BrowserRouter>
 );
+
+
+// React17 Version
+// ReactDOM.render(
+//   <BrowserRouter>
+//     <GlobalStyle />
+//     <App />
+//   </BrowserRouter>,
+//   document.getElementById("root")
+// );

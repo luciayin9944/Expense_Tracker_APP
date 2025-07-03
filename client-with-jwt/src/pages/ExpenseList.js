@@ -168,10 +168,16 @@ function ExpenseList() {
           </select>
         </label>
       </FilterWrapper>
-      <p style={{ textAlign: "center", fontWeight: "bold", marginTop: "20px" }}>
-        Total Expense: ${totalExpense.toFixed(2)}
-      </p>
-  
+
+      <div style={{ textAlign: "center", marginTop: "20px" }}>
+        <p style={{ fontWeight: "bold", margin: "0 0 20px 0" }}>
+          Total Expense: ${totalExpense.toFixed(2)}
+        </p>
+        <Button as={Link} to="/summary">
+          View Summary
+        </Button>
+      </div>
+
       <Wrapper>
         {expenses.length > 0 ? (
           expenses.map((expense) => (
