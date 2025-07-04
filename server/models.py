@@ -37,9 +37,19 @@ class Expense(db.Model):
     purchase_item = db.Column(db.String, nullable=False)
     amount = db.Column(db.Float, nullable=False)
     date = db.Column(db.Date, nullable=False)
+    #category = db.Column(db.String)
+    category = db.Column(db.String, nullable=False, server_default='Other')
+
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     user = db.relationship('User', back_populates='expenses')
+
+    @validates("category")
+    def validate_category(self, key, value):
+        allowed = {'Food', 'Utilities', 'Clothing', 'Home', 'Travel', 'Entertainment', 'Health', 'Other'}
+        if value not in allowed:
+            raise ValueError(f"Invalid category: {value}")
+        return value
 
     def __repr__(self):
         return f'Expense {self.id}, Purchase Item: {self.purchase_item}, Amount: ${self.amount}'
@@ -56,4 +66,5 @@ class ExpenseSchema(Schema):
     purchase_item = fields.Str()
     amount = fields.Float()
     date = fields.Date()
+    category = fields.Str()
     user = fields.Nested(lambda: UserSchema(exclude=("expenses",)))

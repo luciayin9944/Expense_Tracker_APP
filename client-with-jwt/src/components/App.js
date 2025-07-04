@@ -3,6 +3,7 @@ import NavBar from "./NavBar";
 import Login from "../pages/Login";
 import ExpenseList from "../pages/ExpenseList";
 import NewExpense from "../pages/NewExpense";
+import ExpenseSummary from "./ExpenseSummary";
 import { Switch, Route } from "react-router-dom";
 
 function App() {
@@ -42,6 +43,9 @@ function App() {
           </Route>
           <Route exact path="/">
             <ExpenseList userId={user.id} />
+          </Route>
+          <Route exact path="/summary">
+            <ExpenseSummary />
           </Route>
         </Switch>
       </main>

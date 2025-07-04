@@ -7,6 +7,7 @@ function NewExpense({ user }) {
   const [purchaseItem, setPurchaseItem] = useState("");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(""); 
+  const [category, setCategory] = useState("")
   const [errors, setErrors] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const history = useHistory();
@@ -23,6 +24,7 @@ function NewExpense({ user }) {
       },
       body: JSON.stringify({
         purchase_item: purchaseItem,
+        category,
         amount: parseFloat(amount),
         date,
       }),
@@ -50,6 +52,25 @@ function NewExpense({ user }) {
               value={purchaseItem}
               onChange={(e) => setPurchaseItem(e.target.value)}
             />
+          </FormField>
+          <FormField>
+            <Label htmlFor="Category">Category</Label>
+            <select
+              id="category"
+              name="category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            >
+              <option value="">-- Select a Category --</option>
+              <option value="Food">Food</option>
+              <option value="Clothing">Clothing</option>
+              <option value="Home">Home</option>
+              <option value="Travel">Travel</option>
+              <option value="Utilities">Utilities</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Health">Health</option>
+              <option value="Other">Other</option>
+            </select>
           </FormField>
           <FormField>
             <Label htmlFor="amount">Amount ($)</Label>
@@ -87,6 +108,8 @@ function NewExpense({ user }) {
       <WrapperChild>
         <h1>{purchaseItem}</h1>
         <p>
+          📂 {category || "No category"}
+          <br />
           💵 ${amount}
           <br />
           📅 {date || "No date"}
