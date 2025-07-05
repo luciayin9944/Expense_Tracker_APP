@@ -25,9 +25,10 @@ function NavBar({ setUser }) {
         <Button onClick={handleMyPageClick}>
           Expense Records
         </Button>
-        <Button as={Link} to="/new">
+        {/* <Button as={Link} to="/new">
           New Expense
-        </Button>
+        </Button> */}
+        <Button as={Link} to="/summary">View Summary</Button>
         <Button variant="outline" onClick={handleLogoutClick}>
           Logout
         </Button>
@@ -38,16 +39,17 @@ function NavBar({ setUser }) {
 
 const Wrapper = styled.header`
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  padding: 8px;
+  padding: 8px; 16px;
 `;
 
 const Logo = styled.h1`
   font-family: "Permanent Marker", cursive;
-  font-size: 3rem;
+  font-size: 2rem;
   color: deeppink;
   margin: 0;
+  padding-left: 16px; /* adds space from left */
   line-height: 1;
 
   a {
