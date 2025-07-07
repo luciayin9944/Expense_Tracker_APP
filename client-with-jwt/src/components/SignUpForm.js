@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, Error, Input, FormField, Label, Textarea } from "../styles";
+import { Button, Error, Input, FormField, Label } from "../styles";
 
 function SignUpForm({ onLogin }) {
   const [username, setUsername] = useState("");
@@ -11,6 +11,12 @@ function SignUpForm({ onLogin }) {
   function handleSubmit(e) {
     e.preventDefault();
     setErrors([]);
+
+    if (password !== passwordConfirmation) {
+      setErrors(["Passwords do not match"]);
+      return;
+    }
+
     setIsLoading(true);
     fetch("/signup", {
       method: "POST",

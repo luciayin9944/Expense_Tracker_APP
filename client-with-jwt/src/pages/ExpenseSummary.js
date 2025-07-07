@@ -2,7 +2,7 @@
 import styled from "styled-components";
 import { useEffect, useState } from "react";
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
-import { Box } from "../styles";
+//import { Box } from "../styles";
 
 const COLORS = [
   "#8884d8", "#82ca9d", "#ffc658",
@@ -37,7 +37,7 @@ function ExpenseSummary() {
   const totalSpending = data.reduce((sum, item) => sum + item.total, 0);
 
   return (
-    <Box>
+    <div>
       <h2 style={{ textAlign: "center" }}>Summary by Category</h2>
 
       {/* filter */}
@@ -73,7 +73,7 @@ function ExpenseSummary() {
       ) : (
         <FlexWrapper>
             <ChartBox>
-              <PieChart width={1000} height={400}>
+              <PieChart width={800} height={400}>
                 <Pie
                     dataKey="total"
                     data={data}
@@ -123,7 +123,7 @@ function ExpenseSummary() {
           </SummaryBox>
         </FlexWrapper>
       )}
-    </Box>
+    </div>
   );
 }
 
@@ -138,16 +138,33 @@ const FlexWrapper = styled.div`
   gap: 40px;
   flex-wrap: wrap;
   margin-top: 20px;
+
+  @media (max-width: 900px) {
+    flex-direction: column;
+    align-items: center;
+  }
 `;
 
 const ChartBox = styled.div`
   flex: 1;
   min-width: 400px;
+
+  @media (max-width: 900px) {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
 `;
 
 const SummaryBox = styled.div`
   flex: 1;
   min-width: 220px;
+
+  @media (max-width: 900px) {
+    width: 100%;
+    padding: 0 16px;
+    text-align: center;
+  }
 
   ul {
     list-style-type: none;
@@ -160,7 +177,6 @@ const SummaryBox = styled.div`
   }
 
   p {
-    text-align: center;
     font-weight: bold;
   }
 `;
@@ -171,80 +187,3 @@ const SummaryBox = styled.div`
 
 
 
-
-
-
-
-
-
-// // src/components/ExpenseSummary.js
-
-// import { useEffect, useState } from "react";
-// import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
-// import { Box } from "../styles";
-
-// const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#8dd1e1", "#d0ed57", "#a4de6c"];
-
-// function ExpenseSummary() {
-//   const [data, setData] = useState([]);
-
-//   useEffect(() => {
-//     fetch("/expenses/summary_by_category", {
-//       headers: {
-//         Authorization: `Bearer ${localStorage.getItem("token")}`
-//       }
-//     })
-//       .then(r => r.json())
-//       .then(data => {
-//         const processedData = data.map(item => ({
-//             ...item,
-//             name: item.category
-//         }));
-//         setData(processedData);
-//       })
-//       .catch(err => {
-//         console.error("Failed to load summary", err);
-//       });
-//   }, []);
-
-//   return (
-//     <Box>
-//         <h2>Summary by Category</h2>
-//         {data.length === 0 ? (
-//         <p>No data available</p>
-//         ) : (
-//         <>
-//             <PieChart width={400} height={400}>
-//             <Pie
-//                 dataKey="total"
-//                 data={data}
-//                 cx="50%"
-//                 cy="50%"
-//                 outerRadius={120}
-//                 fill="#8884d8"
-//                 label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-//             >
-//                 {data.map((entry, index) => (
-//                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-//                 ))}
-//             </Pie>
-//             <Tooltip />
-//             <Legend />
-//             </PieChart>
-
-//             <div>
-//             <ul style={{ textAlign: "center", listStyleType: "none", padding: 0 }}>
-//                 {data.map((item, index) => (
-//                 <li key={index} style={{ color: COLORS[index % COLORS.length], margin: "4px 0" }}>
-//                     {item.name}: ${item.total.toFixed(2)}
-//                 </li>
-//                 ))}
-//             </ul>
-//             </div>
-//         </>
-//         )}
-//     </Box>
-//   );
-// }
-
-// export default ExpenseSummary;

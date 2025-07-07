@@ -91,29 +91,29 @@ class ExpensesIndex(Resource):
             "total_items": pagination.total
         })
     
-        @jwt_required()
-        def post(self):
-            data = request.get_json()
+    @jwt_required()
+    def post(self):
+        data = request.get_json()
 
-            try:
-                date_obj = datetime.strptime(data["date"], "%Y-%m-%d").date()
-            except ValueError:
-                return {"errors": ["Invalid date format. Use YYYY-MM-DD."]}, 400
+        try:
+            date_obj = datetime.strptime(data["date"], "%Y-%m-%d").date()
+        except ValueError:
+            return {"errors": ["Invalid date format. Use YYYY-MM-DD."]}, 400
 
-            new_expense = Expense(
-                purchase_item=data["purchase_item"],
-                amount=data["amount"],
-                category=data.get("category", "Other"),
-                date=date_obj,  
-                user_id=get_jwt_identity(), 
-        )
+        new_expense = Expense(
+            purchase_item=data["purchase_item"],
+            amount=data["amount"],
+            category=data.get("category", "Other"),
+            date=date_obj,  
+            user_id=get_jwt_identity(), 
+    )
 
-            try:
-                db.session.add(new_expense)
-                db.session.commit()
-                return ExpenseSchema().dump(new_expense), 201
-            except IntegrityError:
-                return {'errors': ['422 Unprocessable Entity']}, 422
+        try:
+            db.session.add(new_expense)
+            db.session.commit()
+            return ExpenseSchema().dump(new_expense), 201
+        except IntegrityError:
+            return {'errors': ['422 Unprocessable Entity']}, 422
         
 
 
