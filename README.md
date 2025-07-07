@@ -46,7 +46,7 @@ This is a secure full-stack expense tracking application built with **React** (f
 
  Clone the repository
    ```bash
-   git clone https://github.com/luciayin9944/Expense_Tracker_Flask_Backend.git
+   git clone https://github.com/luciayin9944/Expense_Tracker_App.git
    cd Expense_Tracker_Flask_Backend
   ```
 
